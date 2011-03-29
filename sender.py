@@ -50,7 +50,7 @@ def main(nmbr, commands, sockSync, sockWatchdog):
                 stop = tmp
             # end
         logger.debug('job finished')
-        print("%s %u %f" % (command, nmbr, stop - start))
+        print '%u %f "%s"' % (nmbr, stop - start, command)
         time.sleep(1)
 
     # send stop signal to workers
@@ -86,12 +86,12 @@ if __name__ == '__main__':
     # configure logger
     logger = logging.getLogger('server')
     if args.logfilename is None:
-        logger.addHandler(logging.StreamHandler())
+        handler = logging.StreamHandler()
     else:
-        filelogger = logging.FileHandler(args.logfilename)
         formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        filelogger.setFormatter(formatter)
-        logger.addHandler(filelogger)
+        handler = logging.FileHandler(args.logfilename)
+        handler.setFormatter(formatter)
+    logger.addHandler(handler)
     # verbosity
     if args.verbose:
         logger.setLevel(logging.DEBUG)
