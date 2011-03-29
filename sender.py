@@ -29,7 +29,7 @@ def main(nmbr, commands, sockSync, sockWatchdog):
     for command in commands:
         # start
         start = time.time()
-        logger.debug('start job')
+        logger.debug('start job: %s' % command)
         for i in range(nmbr):
             watchdog.send(str(i), zmq.SNDMORE)
             watchdog.send('', zmq.SNDMORE)
@@ -88,9 +88,9 @@ if __name__ == '__main__':
     if args.logfilename is None:
         handler = logging.StreamHandler()
     else:
-        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        handler = logging.FileHandler(args.logfilename)
-        handler.setFormatter(formatter)
+        handler = logging.FileHandler(args.logfilename, 'a+')
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
     logger.addHandler(handler)
     # verbosity
     if args.verbose:
