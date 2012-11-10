@@ -7,7 +7,7 @@ import argparse
 
 import zmq
 
-def main(nmbr, command, sockSync, sockWatchdog):
+def main(nmbr, commands, sockSync, sockWatchdog):
     logger = logging.getLogger('server')
     # Prepare our context and sockets
     context = zmq.Context()
@@ -26,10 +26,10 @@ def main(nmbr, command, sockSync, sockWatchdog):
         sync.send(str(i))
     logger.debug('ready')
     time.sleep(1)
-    while True:
+    for command in commands:
         # start
         start = time.time()
-        logger.debug('start job')
+        logger.debug('start job: %s' % command)
         for i in range(nmbr):
             watchdog.send(str(i), zmq.SNDMORE)
             watchdog.send('', zmq.SNDMORE)
@@ -50,9 +50,8 @@ def main(nmbr, command, sockSync, sockWatchdog):
                 stop = tmp
             # end
         logger.debug('job finished')
-        print("%u %f" % (nmbr, stop - start))
+        print '%u %f "%s"' % (nmbr, stop - start, command)
         time.sleep(1)
-        break
 
     # send stop signal to workers
     logger.debug('stopping runners')
@@ -68,7 +67,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Job server')
     # basic configuration
     ru = parser.add_argument_group('Server', 'Arguments for job server')
-    ru.add_argument('command', metavar='COMMAND', help='Command to pass to runners')
+    ru.add_argument('command', metavar='COMMAND', nargs='?', \
+        default=sys.stdin, help='Command to pass to runners')
     ru.add_argument('-n', '--number', dest='count', default=1, \
         help='Number of workers to synchronize with' )
     ru.add_argument('-o', '--output', default=None, dest='logfilename', \
@@ -86,21 +86,25 @@ if __name__ == '__main__':
     # configure logger
     logger = logging.getLogger('server')
     if args.logfilename is None:
-        logger.addHandler(logging.StreamHandler())
+        handler = logging.StreamHandler()
     else:
-        filelogger = logging.FileHandler(args.logfilename)
-        formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-        filelogger.setFormatter(formatter)
-        logger.addHandler(filelogger)
+        handler = logging.FileHandler(args.logfilename, 'a+')
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     # verbosity
     if args.verbose:
         logger.setLevel(logging.DEBUG)
     else:
         logging.getLogger('').setLevel(logging.ERROR)
+    if type(args.command) == type(str()):
+        commands = [args.command]
+    else:
+        commands = [line.strip() for line in args.command if len(line.strip()) > 0]
     # run
     main(
         int(args.count), \
-        args.command,
+        commands,
         args.sync_socket, \
         args.watchdog_socket)
 

@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if args.logfilename is None:
         loghandler = logging.StreamHandler()
     else:
-        loghandler = logging.FileHandler(args.logfilename)
+        loghandler = logging.FileHandler(args.logfilename, 'a+')
     formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
     loghandler.setFormatter(formatter)
     logger.addHandler(loghandler)
